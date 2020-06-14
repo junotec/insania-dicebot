@@ -53,7 +53,7 @@ bot.message do |event|
   # 以下場合毎にダイス数などを正規表現で抜き出し、適切なダイスの関数に渡す
   
   # 判定なしダイス
-  if /^\d+d\d+\s.*$/ =~ content   
+  if /^\d+d\d+\s.*$/ =~ content || /^\d+d\d+$/ =~ content   
     md = content_nbsp.match(/.+(?=d)/)
     nd = content_nbsp.match(/(?<=d).*?(?=\s)/)
     dice_num = md[0]
