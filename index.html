@@ -26,15 +26,10 @@
             padding-left: 0.7em;
             }
         ul li:before {
-            border-radius: 50%; 
-            width: 6px; 
-            height: 6px; 
-            display: block;
-            position: absolute; 
-            left: 0; 
-            top: 0.5em;
-            content: "";
-            background: #1ec4e6;
+            content: '\2022';
+            font-size: 0.8em;
+            padding: 0 0.4em 0 0;
+            color: #1ec4e6;
           }
         ol {
             counter-reset: li;     
@@ -250,6 +245,7 @@ Botの基礎の作成で参考にさせていただきました。</li>
 <h2 id="更新履歴">更新履歴</h2>
 <ul>
 <li>beta1.0(2020/6/11) - 公開。</li>
+<li>beta1.1(2020/6/15) - 正規表現のミスの修正、リファクタリングおよびシート処理など時間のかかる処理の際の「～が入力中」の追加。</li>
 </ul>
 </body>
 </html>

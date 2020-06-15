@@ -174,14 +174,15 @@ end
 
 # --以下Google Spreadsheetがらみの処理--
 # 処理の具体的中身はgspsheet.rbで
+# 通信に時間がかかるので多くの処理でtypingを表示。
 
 # 新規シートの作成
 bot.command :newsheet do |event, name|
   begin
+    event.channel.start_typing()
     newsheet(name)
     i = newsheet_id_add(name)
-    event.respond "新規シート「" + name + "」が作成されました。
-                   idは**"+ i.to_s + "**。" 
+    event.respond "新規シート「" + name + "」が作成されました。idは**"+ i.to_s + "**。" 
   rescue =>e
     event.respond "[" + e.class.to_s + "] " +  e.message.to_s
     print_error(e)
@@ -196,6 +197,7 @@ end
 # 能力値ダイスを振る
 bot.command :statusgen do |event, name|
   begin
+    event.channel.start_typing()
     if sheet_locked?(name) == true   
       event.respond "シート「"+ name +"」はロックされています。"
     else
@@ -215,6 +217,7 @@ end
 # シートのロック(能力値振り直しを禁止)
 bot.command :lock do |event, name|
   begin
+    event.channel.start_typing()
     sheet_lock(name)
     event.respond "シートをロックしました。"
   rescue NoMethodError => e1
@@ -230,6 +233,7 @@ end
 # シートのアンロック
 bot.command :unlock do |event, name|
   begin
+    event.channel.start_typing()
     sheet_unlock(name)
     event.respond "シートのロックを解除しました。"
   rescue NoMethodError => e1
@@ -245,6 +249,7 @@ end
 # シートの値1つの変更
 bot.command :change do |event, name, skill, value, type|
   begin
+    event.channel.start_typing()
     if sheet_locked?(name) == true   
       event.respond "シート「"+ name +"」はロックされています。"
     elsif type_abbr_to_type(type) == "合計値"   
@@ -264,6 +269,7 @@ end
 # シートのある値の中身を表示
 bot.command :show do |event, name, skill, type="合計値"|
   begin
+    event.channel.start_typing()
     event.respond skill + "(" + type_abbr_to_type(type) + "): " +
                   show_value(name, skill, type)
   rescue NoMethodError => e1
@@ -279,6 +285,7 @@ end
 # シート全体をテキストとして表示
 bot.command :showsheet do |event, name|
   begin
+    event.channel.start_typing()
     # 字数制限2000字を超える場合は分割する
     msg = show_sheet(name)
     if msg.length > 2000   
@@ -305,15 +312,14 @@ bot.command :delsheet do |event, name|
     else
       event.user.await(:confirm) do |confirm_event|
         if confirm_event.message.content == name   
+          event.channel.start_typing()
           delete_sheet(name)
           event.respond "シート「" + name + "」を削除しました。"
         else
           event.respond "シート名が間違っています。処理を終了します。"
         end
       end
-      event.respond "本当にシート「" + name + "」を削除しますか? この操作は
-                     取り消せません。\n続行する場合にはシート名を正確に入力
-                     してください。"
+      event.respond "本当にシート「" + name + "」を削除しますか? この操作は取り消せません。\n続行する場合にはシート名を正確に入力してください。"
     end
   rescue NoMethodError => e1
     event.respond "そのような名前のシートは存在しません。(" + "[" +
@@ -340,6 +346,7 @@ end
 bot.command :i do |event, id, skill,
                    dice_num = "1", dice_size = "100", type = "<="|
   begin
+    event.channel.start_typing()
     if skill =~ /\A[^*\+\-\/]+[*\/\+\-]\d+[\d\+\-*\/\(\)]*\z/   
       skill_name = skill.gsub(/\A([^*\+\-\/]+)[*\/\+\-]\d+[\d\+\-*\/\(\)]*\z/,
                               '\1')
@@ -372,6 +379,7 @@ end
 # 正気度の減少(よく使う＋SANと混同しやすいので:changeとは別にコマンド化)
 bot.command :san do |event, id, value|
   begin
+    event.channel.start_typing()
     add_value(id_to_title(id.to_i), "正気度", value, "minus")
     previous_san = show_value(id_to_title(id.to_i), "正気度", "sum").to_i +
                    value.to_i
@@ -386,6 +394,7 @@ end
 # 正気度の回復
 bot.command :sanr do |event, id, value|
   begin
+    event.channel.start_typing()
     # 減少値なので符号を反転
     value = (-value.to_i).to_s
     add_value(id_to_title(id.to_i), "正気度", value, "minus")
@@ -406,5 +415,5 @@ bot.command :help do |event|
   f.close
   event.respond help
 end
-
+at_exit { bot.stop }
 bot.run
