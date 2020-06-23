@@ -26,10 +26,15 @@
             padding-left: 0.7em;
             }
         ul li:before {
-            content: '\2022';
-            font-size: 0.8em;
-            padding: 0 0.4em 0 0;
-            color: #1ec4e6;
+            border-radius: 50%; 
+            width: 6px; 
+            height: 6px; 
+            display: block;
+            position: absolute; 
+            left: 0; 
+            top: 0.5em;
+            content: "";
+            background: #1ec4e6;
           }
         ol {
             counter-reset: li;     
@@ -65,10 +70,10 @@
 <li>初心者にはRubyの導入がやや面倒。</li>
 <li>Google Drive APIの準備も面倒。</li>
 <li>ダイス機能自体は貧弱である(CoC6の主要機能にしか対応していない)。</li>
-<li>通信の関係上微妙に動作が遅い。</li>
+<li>通信の関係上微妙に動作が遅い(自動判定など一部は高速化済み)。</li>
 </ul>
 <h2 id="ダウンロード">ダウンロード</h2>
-<p><a href="https://www.dropbox.com/s/znmru44b0e9483x/Insania%20beta1.1.zip?dl=1">ダウンロード(beta1.0)</a></p>
+<p><a href="https://www.dropbox.com/s/shc1nf837b71f1b/insania_beta1_2.zip?dl=1">ダウンロード(beta1.2)</a></p>
 <h2 id="注意">注意</h2>
 <ul>
 <li>本アプリケーションはベータ版のため、今後も大規模な更新や機能追加が行われる可能性があるほか、深刻な不具合が存在する可能性があります。こまめに更新を確認のうえ、自己責任でご利用ください。</li>
@@ -80,7 +85,7 @@
 <p>Windows環境の場合、RubyInstallerを使うのが簡単です。(Mac環境やLinux環境での動作確認は行っていません。)</p>
 <p>動作確認バージョンは<strong>2.4.10p364, 2.5.8p224, 2.6.6p146</strong>です。</p>
 <ol type="1">
-<li><a href="https://rubyinstaller.org/downloads/">Ruby Installer</a>にアクセスし、左側のWITH DEVKITの欄から適切なバージョン<strong>(Ruby+Devkit 2.6.x-x (x64)、あるいは2.5.x-x(x64)か2.4.x-x(x64) )</strong>のインストーラをダウンロードします。(利用するGem(nokogiri)の関係上、<strong>Ruby2.7.xでは現状動作しません。</strong>)</li>
+<li><a href="https://rubyinstaller.org/downloads/">Ruby Installer</a>にアクセスし、左側のWITH DEVKITの欄から適切なバージョン <strong>(Ruby+Devkit 2.6.x-x (x64)、あるいは2.5.x-x(x64)か2.4.x-x(x64) )</strong> のインストーラをダウンロードします。(利用するGem(nokogiri)の関係上、<strong>Ruby2.7.xでは現状動作しません。</strong>)</li>
 <li>インストーラをダブルクリックして実行します。設定は初期設定のままで問題ありません。</li>
 <li>少々時間がかかるのでお茶でも飲んで待ちます。インストール成功画面が出ていれば終了です。</li>
 </ol>
@@ -126,9 +131,9 @@
 <ol type="1">
 <li>解凍して出てくるフォルダ内の、「config」フォルダを開きます。</li>
 <li>「config」フォルダ内部のconfig.jsonをテキストエディタ(メモ帳など)で開きます。</li>
-<li><strong>「“bot_token” : 」</strong>の右の<strong>「“PASTE_YOUR_BOT_TOKEN_HERE”」</strong>の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記<strong>「ダイスボットの登録」で</strong>メモしておいたTOKENを貼り付けます。</li>
-<li><strong>「“bot_client_id” : 」</strong>の右の<strong>「“PASTE YOUR CLIENT ID HERE”」</strong>の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記<strong>「ダイスボットの登録」で</strong>メモしておいたCLIENT IDを貼り付けます(Google APPのCLIENT IDと間違えないように注意してください)。</li>
-<li><strong>「“drive_url” :」</strong>の右の<strong>「“PASTE YOUR SPREADSHEET URL HERE”」</strong>の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)使用したいGoogle SpreadsheetのURLを貼り付けます。</li>
+<li><strong>「“bot_token” : 」</strong> の右の <strong>「“PASTE_YOUR_BOT_TOKEN_HERE”」</strong> の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記 <strong>「ダイスボットの登録」で</strong>メモしておいたTOKENを貼り付けます。</li>
+<li><strong>「“bot_client_id” : 」</strong> の右の <strong>「“PASTE YOUR CLIENT ID HERE”」</strong> の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記<strong>「ダイスボットの登録」で</strong>メモしておいたCLIENT IDを貼り付けます(Google APPのCLIENT IDと間違えないように注意してください)。</li>
+<li><strong>「“drive_url” :」</strong> の右の <strong>「“PASTE YOUR SPREADSHEET URL HERE”」</strong> の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)使用したいGoogle SpreadsheetのURLを貼り付けます。</li>
 <li>以上の手順を終えると、config.jsonの中身は以下のようになっているはずです(具体的なアドレスやTOKENの値は個々人で異なります)。</li>
 </ol>
 <pre><code>{
@@ -138,8 +143,8 @@
 }</code></pre>
 <ol start="7" type="1">
 <li>次に、同じ「config」フォルダ内部のspreadsheet_config.jsonをテキストエディタで開きます。</li>
-<li><strong>「“client_id”: 」</strong>の右の<strong>「“PASTE YOUR CLIENT ID(GOOGLE) HERE”」</strong>の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記<strong>「GoogleアカウントとGoogle Drive API関連の準備」</strong>でコピーしておいたクライアントIDを貼り付けます。</li>
-<li><strong>「“client_secret”: 」</strong>の右の<strong>「“PASTE YOUR CLIENT SECRET(GOOGLE) HERE”」</strong>の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記<strong>「GoogleアカウントとGoogle Drive API関連の準備」</strong>でコピーしておいたクライアントシークレットを貼り付けます。</li>
+<li><strong>「“client_id”: 」</strong> の右の <strong>「“PASTE YOUR CLIENT ID(GOOGLE) HERE”」</strong> の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記<strong>「GoogleアカウントとGoogle Drive API関連の準備」</strong>でコピーしておいたクライアントIDを貼り付けます。</li>
+<li><strong>「“client_secret”:」</strong> の右の <strong>「“PASTE YOUR CLIENT SECRET(GOOGLE) HERE”」</strong> の部分に、(ダブルクオーテーションマーク「""」は左右に残した状態で)上記 <strong>「GoogleアカウントとGoogle Drive API関連の準備」</strong> でコピーしておいたクライアントシークレットを貼り付けます。</li>
 <li>以上の手順を終えると、spreadsheet_config.jsonの中身は以下のようになっているはずです。</li>
 </ol>
 <pre><code>{
@@ -197,7 +202,7 @@
 <p>　スプレッドシートにおける「キック」「忍び歩き」などの技能は、各自で追加・削除が可能です。テンプレートの技能の列に技能名を追加し、Discordで<code>xreloadskills</code>を入力すると内部の対応表が更新され、コマンドで利用できるようになります。</p>
 <p>　また、<strong>職業P(または初期値)と趣味Pの間</strong> (初期値と趣味Pの間で合計をとっているので、趣味Pの右に追加すると合計値に反映されません)に列を追加すると、いちおう職業Pや趣味P以外のポイント種別を追加することができます。また、追加した列を<code>xchange</code>などのコマンドから参照する場合は、そのまま列の名前(シートの1行目にある名前)を使って下さい。たとえば、「遺伝」と1行目に書いた列を追加した場合、「xchange (PC名) (変更後の値) 遺伝」のようにして値を変更することができます。</p>
 <h2 id="連絡先">連絡先</h2>
-<p>バグ報告などはDiscord(Juno#3595)か、(GitHubの使い方に慣れている方の場合)<a href="https://github.com/junotec/insania-dicebot">GitHubリポジトリ</a>へのissue追加でお願いします。また、可能ならば修正を加えてPull Requestを送っていただいても構いません。</p>
+<p>バグ報告などはDiscord(Juno#3595)か、(GitHubの使い方に慣れている方の場合)GitHubリポジトリへのissue追加でお願いします。また、可能ならば修正を加えてPull Requestを送っていただいても構いません。</p>
 <h2 id="ライセンス関連">ライセンス関連</h2>
 <h3 id="使用ライブラリ">使用ライブラリ</h3>
 <ul>
@@ -210,6 +215,8 @@ Discordとのやり取りに使用。<a href="https://opensource.org/licenses/MI
 <ul>
 <li><a href="https://discord.com">Discord</a><br />
 ボイス・テキストの両方に対応したチャットアプリ。</li>
+<li><a href="https://www.google.com/intl/ja_jp/sheets/about/">Googleスプレッドシート</a><br />
+オンラインで表(スプレッドシート)の作成・編集ができるサービス。</li>
 </ul>
 <h3 id="insaniaのライセンス">Insaniaのライセンス</h3>
 <p><a href="https://opensource.org/licenses/MIT">MITライセンス</a>でライセンスします。</p>
@@ -245,7 +252,8 @@ Botの基礎の作成で参考にさせていただきました。</li>
 <h2 id="更新履歴">更新履歴</h2>
 <ul>
 <li>beta1.0(2020/6/11) - 公開。</li>
-<li>beta1.1(2020/6/15) - 正規表現のミスの修正、リファクタリングおよびシート処理など時間のかかる処理の際の「～が入力中」の追加。</li>
+<li>beta1.1(2020/6/15) - リファクタリング、時間のかかる処理への「入力中…」の追加</li>
+<li>beta1.2(2020/6/23) - シートを事前にローカルに保存することで、読み取り専用の処理の高速化</li>
 </ul>
 </body>
 </html>

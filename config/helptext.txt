@@ -1,4 +1,4 @@
-**Insania beta1.0**
+**Insania beta1.2**
 > Author: Juno#3595
 > Command List:
 > `xhelp`

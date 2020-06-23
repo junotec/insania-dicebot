@@ -139,7 +139,6 @@ bot.message do |event|
                   content_nbsp.match(/.*?(?=\s)/)[0].gsub('*', '\*') + ' > ' +
                   content_converted.gsub('*', '\*') + ' > ' + k.to_s
   end
-  
   # 従来の対抗ロール。
   if /^res\(\d+-\d+\)\s.*$/ =~ content   
     md = content.match(/(?<=\().*?(?=-)/)
@@ -174,7 +173,6 @@ end
 
 # --以下Google Spreadsheetがらみの処理--
 # 処理の具体的中身はgspsheet.rbで
-# 通信に時間がかかるので多くの処理でtypingを表示。
 
 # 新規シートの作成
 bot.command :newsheet do |event, name|
@@ -183,6 +181,8 @@ bot.command :newsheet do |event, name|
     newsheet(name)
     i = newsheet_id_add(name)
     event.respond "新規シート「" + name + "」が作成されました。idは**"+ i.to_s + "**。" 
+    save_to_local(name)
+    save_to_local("対応表")
   rescue =>e
     event.respond "[" + e.class.to_s + "] " +  e.message.to_s
     print_error(e)
@@ -203,6 +203,7 @@ bot.command :statusgen do |event, name|
     else
       status_gen(name)
       event.respond "シート「" + name + "」の能力値ダイスを振りました。"
+      save_to_local(name)
     end
     rescue NoMethodError => e1
       event.respond "そのような名前のシートは存在しません。(" + "[" + 
@@ -258,6 +259,7 @@ bot.command :change do |event, name, skill, value, type|
       change_value(name, skill, value, type)
       event.respond "「" + name + "」の" + skill + "に" + 
                     type_abbr_to_type(type) + value + "を追加しました。"
+      save_to_local(name)
     end
   rescue =>e
     event.respond "[" + e.class.to_s + "] " +  e.message.to_s
@@ -271,7 +273,7 @@ bot.command :show do |event, name, skill, type="合計値"|
   begin
     event.channel.start_typing()
     event.respond skill + "(" + type_abbr_to_type(type) + "): " +
-                  show_value(name, skill, type)
+                  show_value_local(name, skill, type)
   rescue NoMethodError => e1
     event.respond "そのような名前のシートは存在しません。(" + "[" +
                   e1.class.to_s + "] " + e1.message.to_s + ")"
@@ -315,6 +317,7 @@ bot.command :delsheet do |event, name|
           event.channel.start_typing()
           delete_sheet(name)
           event.respond "シート「" + name + "」を削除しました。"
+          save_to_local("対応表")
         else
           event.respond "シート名が間違っています。処理を終了します。"
         end
@@ -330,7 +333,8 @@ bot.command :delsheet do |event, name|
     print_error(e2)
   end
 end
-    
+
+# 技能値とカラムの対応表の更新
 bot.command :reloadskills do |event|
   begin
     reload_skills("Sheet1")
@@ -340,17 +344,29 @@ bot.command :reloadskills do |event|
     print_error(e)
   end
 end
+
+# ローカルとの手動同期(ふつうは必要ない)
+bot.command :sync do |event, name|
+  begin
+    save_to_local(name)
+    save_to_local("対応表")
+    event.respond "シート「#{name}」をローカルに保存しました。"
+  rescue =>e
+    event.respond "[" + e.class.to_s + "] " + e.message.to_s
+    print_error(e)
+  end
+end
+  
     
 # シートを利用した自動判定。簡単な計算機能付き。
 # オプションで判定の種類とダイスを変更可
 bot.command :i do |event, id, skill,
                    dice_num = "1", dice_size = "100", type = "<="|
   begin
-    event.channel.start_typing()
     if skill =~ /\A[^*\+\-\/]+[*\/\+\-]\d+[\d\+\-*\/\(\)]*\z/   
       skill_name = skill.gsub(/\A([^*\+\-\/]+)[*\/\+\-]\d+[\d\+\-*\/\(\)]*\z/,
                               '\1')
-      skill_val = skill_value(id_to_title(id.to_i), skill_name)
+      skill_val = skill_value_local(id_to_title(id.to_i), skill_name)
       formula = skill.sub(/\A[^*\+\-\/]+([*\/\+\-]\d+[\d\+\-*\/()]*)\z/,
                           skill_val.to_s + '\1')
       value = eval(formula)
@@ -358,7 +374,7 @@ bot.command :i do |event, id, skill,
                     judge_dice_with_formula(dice_num.to_i, dice_size.to_i,
                                             type, value, formula)
     else
-      skill_val = skill_value(id_to_title(id.to_i), skill)
+      skill_val = skill_value_local(id_to_title(id.to_i), skill)
       event.respond '\> ' + get_user_name(event.user) + "\n" +
                     judge_dice(dice_num.to_i, dice_size.to_i, type, skill_val)
     end
@@ -381,10 +397,11 @@ bot.command :san do |event, id, value|
   begin
     event.channel.start_typing()
     add_value(id_to_title(id.to_i), "正気度", value, "minus")
-    previous_san = show_value(id_to_title(id.to_i), "正気度", "sum").to_i +
-                   value.to_i
     current_san = show_value(id_to_title(id.to_i), "正気度", "sum")
-    event.respond "SAN" + previous_san.to_s + "→" + current_san
+    previous_san = current_san.to_i + value.to_i
+    event.respond '\> ' + get_user_name(event.user) + "\n" +
+                  "SAN" + previous_san.to_s + "→" + current_san
+    save_to_local(id_to_title(id.to_i))
   rescue =>e
     event.respond "[" + e.class.to_s + "] " +  e.message.to_s
     print_error(e)
@@ -398,10 +415,11 @@ bot.command :sanr do |event, id, value|
     # 減少値なので符号を反転
     value = (-value.to_i).to_s
     add_value(id_to_title(id.to_i), "正気度", value, "minus")
-    previous_san = show_value(id_to_title(id.to_i), "正気度", "sum").to_i +
-                   value.to_i
     current_san = show_value(id_to_title(id.to_i), "正気度", "sum")
-    event.respond "SAN" + previous_san.to_s + "→" + current_san
+    previous_san = current_san.to_i + value.to_i 
+    event.respond '\> ' + get_user_name(event.user) + "\n" +
+                  "SAN" + previous_san.to_s + "→" + current_san
+    save_to_local(id_to_title(id.to_i))
   rescue =>e
     event.respond "[" + e.class.to_s + "] " +  e.message.to_s
     print_error(e)
@@ -416,4 +434,5 @@ bot.command :help do |event|
   event.respond help
 end
 at_exit { bot.stop }
+
 bot.run

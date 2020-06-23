@@ -1,7 +1,7 @@
 require "google_drive"
 require "json"
 require "./dicecore"
-
+require "csv"
 
 # config.jsonを読み込んでセッションを確立
 session = GoogleDrive::Session.from_config("config/spreadsheet_config.json")
@@ -35,27 +35,43 @@ end
 
 # idを受取り対応するタイトルを返す
 def id_to_title(id)
-  list = $sp.worksheet_by_title("対応表")
-  return list[id,1]
+  local_path = "data/対応表.txt"
+  save_to_local("対応表") unless File.exist?(local_path)
+  f = File.open(local_path, "r")
+  content_array = eval(f.read)
+  f.close
+  return content_array[id-1]
+  # ローカルでない場合(参考)
+  # list = $sp.worksheet_by_title("対応表")
+  # return list[id,1]
 end
 
 # タイトルを受け取りidを返す
 def title_to_id(title)
-  list = $sp.worksheet_by_title("対応表")
-  i = 1
-  while list[i,1] != title
-    i += 1
-  end
-  return i
+  local_path = "data/対応表.txt"
+  save_to_local("対応表") unless File.exist?(local_path)
+  f = File.open(local_path, "r")
+  content_array = eval(f.read)
+  f.close
+  return content_array.find_index(title) + 1
+  # ローカルでない場合(参考)
+  # list = $sp.worksheet_by_title("対応表")
+  # i = 1
+  # while list[i,1] != title
+    # i += 1
+  # end
+  # return i
 end
 
-# シートの削除。対応表からも消す
+# シートの削除。ローカル及び対応表からも消す
 def delete_sheet(pc_title)
   ws = $sp.worksheet_by_title(pc_title)
   ws.delete
   list = $sp.worksheet_by_title("対応表")
   list.delete_rows(title_to_id(pc_title), 1)
   list.save
+  local_path = "data/#{pc_title}.txt"
+  File.delete(local_path) if File.exist?(local_path)
 end
 
 # 指定したPCのシートの能力値をランダム生成
@@ -146,6 +162,7 @@ def reload_skills(pc_title)
   File.open("config/skills.json", mode = "w") do |f|
     JSON.dump(skills, f)
   end
+  return nil
 end
 
 # 略称を技能種別に変換。略称が無い(そのまま)の場合はそのまま返す
@@ -204,15 +221,35 @@ def show_value(pc_title, skill, type)
   return ws.list[skills[skill]-2][type_abbr_to_type(type)].to_s
 end
 
-# 指定したPCの指定した技能の値(合計値)を返す
+# skill_valueのローカル版
+def show_value_local(pc_title, skill, type)
+  local_path = "data/#{pc_title}.txt"
+  save_to_local(pc_title) unless File.exist?(local_path)
+  f = File.open(local_path, "r")
+  content_hash = eval(f.read)
+  f.close
+  return content_hash[skill][type_abbr_to_type(type)].to_s
+end
+
+# 指定したPCの指定した技能の値(合計値)を整数で返す
 def skill_value(pc_title, skill)
   ws = $sp.worksheet_by_title(pc_title)
-  # 技能名とIDの対応表(ファイルから読み取り、ハッシュにする)
+  #技能名とIDの対応表(ファイルから読み取り、ハッシュにする)
   f = File.open("config/skills.json")
   skills_json = f.read  # 全て読み込む
   f.close
   skills = JSON.parse(skills_json)
   return ws.list[skills[skill]-2]["合計値"].to_i
+end
+  
+# skill_valueのローカル版
+def skill_value_local(pc_title, skill)
+  local_path = "data/#{pc_title}.txt"
+  save_to_local(pc_title) unless File.exist?(local_path)
+  f = File.open(local_path, "r")
+  content_hash = eval(f.read)
+  f.close
+  return content_hash[skill]["合計値"].to_i
 end
 
 # 対応表を文字列出力
@@ -238,4 +275,34 @@ def show_sheet(name)
     msg = msg + "\n"
   end
   return msg
+end
+
+# 処理時間短縮のため、シートをローカルにハッシュとして保管
+# 対応表のみ形式が異なるので分岐
+def save_to_local(name)
+  ws = $sp.worksheet_by_title(name)
+  File.open("./data/#{name}.csv", "w") do |f|
+    ws.export_as_file(f.path)
+  end
+  unless name == "対応表"
+    list = CSV.read("./data/#{name}.csv", headers:true).map(&:to_hash)
+    hash = {}
+    list.each do |obj|
+      hash[obj["技能名"]] = obj
+    end
+    File.open("data/#{name}.txt", mode = "w") do |f|
+      f.write(hash)
+    end
+  else
+    list = CSV.read("./data/#{name}.csv")
+    array = []
+    list.each do |obj|
+      array << obj[0]
+    end
+    File.open("data/#{name}.txt", mode = "w") do |f|
+      f.write(array)
+    end
+  end
+  File.delete("./data/#{name}.csv")
+  return nil
 end
