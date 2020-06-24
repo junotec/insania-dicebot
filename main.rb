@@ -17,9 +17,9 @@ client_id: CLIENT_ID, prefix: "x"
 
 # ニックネームが無い場合のエラー回避
 def get_user_name(user)
-  if user.nick != nil   
+  if user.nick != nil
     return user.nick
-  elsif user.name != nil    
+  elsif user.name != nil
     return user.name
   else
     return "Unknown User"
@@ -37,7 +37,7 @@ bot.message do |event|
   # discordrbのコマンドの形に収まらないダイスコマンド全般を扱うブロック。
   # 基本は正規表現で必要部分を検出して処理する
   content_raw = event.message.content
-  
+
   # 正規表現で扱いやすいように主要な全角文字を半角に、大文字Dを小文字に、
   # 不等号イコールの表記を揃える
   content = content_raw.tr('０-９ａ-ｚＡ-Ｚ＜＝＞＋－＊',
@@ -46,23 +46,23 @@ bot.message do |event|
                                                     "=<" => "<=",
                                                     "=>" => ">=",
                                                     "　" => "\s")
-  
+
   # MdN<=Oのような場合の区切りの都合上末尾に半角スペースを挿入する。
   content_nbsp = content + "\s"
-  
+
   # 以下場合毎にダイス数などを正規表現で抜き出し、適切なダイスの関数に渡す
-  
+
   # 判定なしダイス
-  if /^\d+d\d+\s.*$/ =~ content || /^\d+d\d+$/ =~ content   
+  if /^\d+d\d+\s.*$/ =~ content || /^\d+d\d+$/ =~ content
     md = content_nbsp.match(/.+(?=d)/)
     nd = content_nbsp.match(/(?<=d).*?(?=\s)/)
     dice_num = md[0]
     dice_size = nd[0]
     event.respond '\> ' + get_user_name(event.user) + "\n" +
                   simple_dice(dice_num.to_i, dice_size.to_i)
-  
+
   # <=ダイス
-  elsif /^\d+d\d+<=\d+$/ =~ content || /^\d+d\d+<=\d+\s.*$/ =~ content   
+  elsif /^\d+d\d+<=\d+$/ =~ content || /^\d+d\d+<=\d+\s.*$/ =~ content
     ld = content_nbsp.match(/.+(?=d)/)
     md = content_nbsp.match(/(?<=d).*?(?=<)/)
     nd = content_nbsp.match(/(?<==).*?(?=\s)/)
@@ -71,9 +71,9 @@ bot.message do |event|
     value = nd[0]
     event.respond '\> ' + get_user_name(event.user) + "\n" +
                   judge_dice(dice_num.to_i, dice_size.to_i, "<=", value.to_i)
-  
+
   # <ダイス
-  elsif /^\d+d\d+<\d+$/ =~ content || /^\d+d\d+<\d+\s.*$/ =~ content   
+  elsif /^\d+d\d+<\d+$/ =~ content || /^\d+d\d+<\d+\s.*$/ =~ content
     ld = content_nbsp.match(/.+(?=d)/)
     md = content_nbsp.match(/(?<=d).*?(?=<)/)
     nd = content_nbsp.match(/(?<=<).*?(?=\s)/)
@@ -82,9 +82,9 @@ bot.message do |event|
     value = nd[0]
     event.respond '\> ' + get_user_name(event.user) + "\n" +
                   judge_dice(dice_num.to_i, dice_size.to_i, "<", value.to_i)
-  
+
   # >=ダイス
-  elsif /^\d+d\d+>=\d+$/ =~ content || /^\d+d\d+>=\d+\s.*$/ =~ content   
+  elsif /^\d+d\d+>=\d+$/ =~ content || /^\d+d\d+>=\d+\s.*$/ =~ content
     ld = content_nbsp.match(/.+(?=d)/)
     md = content_nbsp.match(/(?<=d).*?(?=>)/)
     nd = content_nbsp.match(/(?<==).*?(?=\s)/)
@@ -93,9 +93,9 @@ bot.message do |event|
     value = nd[0]
     event.respond '\> ' + get_user_name(event.user) + "\n" +
                   judge_dice(dice_num.to_i, dice_size.to_i, ">=", value.to_i)
-  
+
   # >ダイス
-  elsif /^\d+d\d+>\d+$/ =~ content || /^\d+d\d+>\d+\s.*$/ =~ content   
+  elsif /^\d+d\d+>\d+$/ =~ content || /^\d+d\d+>\d+\s.*$/ =~ content
     ld = content_nbsp.match(/.+(?=d)/)
     md = content_nbsp.match(/(?<=d).*?(?=>)/)
     nd = content_nbsp.match(/(?<=>).*?(?=\s)/)
@@ -104,9 +104,9 @@ bot.message do |event|
     value = nd[0]
     event.respond '\> ' + get_user_name(event.user) + "\n" +
                   judge_dice(dice_num.to_i, dice_size.to_i, ">", value.to_i)
-  
+
   # = ダイス
-  elsif /^\d+d\d+=\d+$/ =~ content || /^\d+d\d+=\d+\s.*$/ =~ content   
+  elsif /^\d+d\d+=\d+$/ =~ content || /^\d+d\d+=\d+\s.*$/ =~ content
     ld = content_nbsp.match(/.+(?=d)/)
     md = content_nbsp.match(/(?<=d).*?(?==)/)
     nd = content_nbsp.match(/(?<==).*?(?=\s)/)
@@ -115,9 +115,9 @@ bot.message do |event|
     value = nd[0]
     event.respond '\> ' + get_user_name(event.user) + "\n" +
                   judge_dice(dice_num.to_i, dice_size.to_i, "=", value.to_i)
-    
+
   # 複数ダイス。ダイスを各自振った後元の式に代入し、evalでそのまま計算。
-  elsif /^\d+d\d+[d\d\+\-*\/\(\)]*/ =~ content   
+  elsif /^\d+d\d+[d\d\+\-*\/\(\)]*/ =~ content
     # MdNの形の部分を全て検出
     content_dices = content_nbsp.scan(/\d+d\d+/)
     # ダイスの個数と値の上限、振った結果を格納する配列をそれぞれ用意
@@ -131,16 +131,16 @@ bot.message do |event|
       dice_sizes.push(content_dices[i].match(/(?<=d).*/)[0])
       results.push(dices(dice_nums[i].to_i, dice_sizes[i].to_i))
       # 出目を式に代入、数字と演算記号のみの式とする
-      content_converted = content_converted.sub(dice_nums[i] + "d" + 
+      content_converted = content_converted.sub(dice_nums[i] + "d" +
                                                 dice_sizes[i], results[i].to_s)
-    end 
+    end
     k = eval(content_converted)
     event.respond '\> ' + get_user_name(event.user) + "\n" + 'Insania: ' +
                   content_nbsp.match(/.*?(?=\s)/)[0].gsub('*', '\*') + ' > ' +
                   content_converted.gsub('*', '\*') + ' > ' + k.to_s
   end
   # 従来の対抗ロール。
-  if /^res\(\d+-\d+\)\s.*$/ =~ content   
+  if /^res\(\d+-\d+\)\s.*$/ =~ content
     md = content.match(/(?<=\().*?(?=-)/)
     nd = content.match(/(?<=-).*?(?=\))/)
     active = md[0]
@@ -152,15 +152,15 @@ end
 
 # コマンド版の対抗ロール
 bot.command :res do |event,active,passive|
-  event.respond '\> ' + get_user_name(event.user) + "\n" + 
+  event.respond '\> ' + get_user_name(event.user) + "\n" +
                 res(active.to_i, passive.to_i)
 end
 
 # 狂気表。typeは一時的狂気/不定の狂気の指定用
 bot.command :mad do |event,type|
-  if type == "temp"   
+  if type == "temp"
     event.respond '\> ' + get_user_name(event.user) + "\n" + temp_madness()
-  elsif type == "ind"   
+  elsif type == "ind"
     event.respond '\> ' + get_user_name(event.user) + "\n" + ind_madness()
   end
 end
@@ -180,7 +180,7 @@ bot.command :newsheet do |event, name|
     event.channel.start_typing()
     newsheet(name)
     i = newsheet_id_add(name)
-    event.respond "新規シート「" + name + "」が作成されました。idは**"+ i.to_s + "**。" 
+    event.respond "新規シート「" + name + "」が作成されました。idは**"+ i.to_s + "**。"
     save_to_local(name)
     save_to_local("対応表")
   rescue =>e
@@ -198,7 +198,7 @@ end
 bot.command :statusgen do |event, name|
   begin
     event.channel.start_typing()
-    if sheet_locked?(name) == true   
+    if sheet_locked?(name) == true
       event.respond "シート「"+ name +"」はロックされています。"
     else
       status_gen(name)
@@ -206,7 +206,7 @@ bot.command :statusgen do |event, name|
       save_to_local(name)
     end
     rescue NoMethodError => e1
-      event.respond "そのような名前のシートは存在しません。(" + "[" + 
+      event.respond "そのような名前のシートは存在しません。(" + "[" +
                      e1.class.to_s + "] " + e1.message.to_s + ")"
       print_error(e1)
     rescue =>e2
@@ -222,7 +222,7 @@ bot.command :lock do |event, name|
     sheet_lock(name)
     event.respond "シートをロックしました。"
   rescue NoMethodError => e1
-    event.respond "そのような名前のシートは存在しません。(" + "[" + 
+    event.respond "そのような名前のシートは存在しません。(" + "[" +
                    e1.class.to_s + "] " + e1.message.to_s + ")"
     print_error(e1)
   rescue =>e2
@@ -238,7 +238,7 @@ bot.command :unlock do |event, name|
     sheet_unlock(name)
     event.respond "シートのロックを解除しました。"
   rescue NoMethodError => e1
-    event.respond "そのような名前のシートは存在しません。(" + "[" + 
+    event.respond "そのような名前のシートは存在しません。(" + "[" +
                    e1.class.to_s + "] " + e1.message.to_s + ")"
     print_error(e1)
   rescue =>e2
@@ -251,13 +251,13 @@ end
 bot.command :change do |event, name, skill, value, type|
   begin
     event.channel.start_typing()
-    if sheet_locked?(name) == true   
+    if sheet_locked?(name) == true
       event.respond "シート「"+ name +"」はロックされています。"
-    elsif type_abbr_to_type(type) == "合計値"   
+    elsif type_abbr_to_type(type) == "合計値"
       event.respond "合計値は手動変更できません。"
     else
       change_value(name, skill, value, type)
-      event.respond "「" + name + "」の" + skill + "に" + 
+      event.respond "「" + name + "」の" + skill + "に" +
                     type_abbr_to_type(type) + value + "を追加しました。"
       save_to_local(name)
     end
@@ -290,7 +290,7 @@ bot.command :showsheet do |event, name|
     event.channel.start_typing()
     # 字数制限2000字を超える場合は分割する
     msg = show_sheet(name)
-    if msg.length > 2000   
+    if msg.length > 2000
       msgs = msg.scan(/.{1,#{2000}}/m)
       msgs.each { |msg_part| event.respond msg_part }
     else
@@ -309,11 +309,11 @@ end
 # シートの削除。確認機能付き
 bot.command :delsheet do |event, name|
   begin
-    if name == "対応表" || name == "Sheet1"   
+    if name == "対応表" || name == "Sheet1"
       event.respond "そのシートは削除できません。"
     else
       event.user.await(:confirm) do |confirm_event|
-        if confirm_event.message.content == name   
+        if confirm_event.message.content == name
           event.channel.start_typing()
           delete_sheet(name)
           event.respond "シート「" + name + "」を削除しました。"
@@ -345,25 +345,36 @@ bot.command :reloadskills do |event|
   end
 end
 
-# ローカルとの手動同期(ふつうは必要ない)
+# ローカルとの手動同期
 bot.command :sync do |event, name|
   begin
-    save_to_local(name)
-    save_to_local("対応表")
-    event.respond "シート「#{name}」をローカルに保存しました。"
+    if name == "all"
+      save_to_local("対応表")
+      f = File.open("data/sheetlist.txt", "r")
+      content_array = eval(f.read)
+      f.close
+      content_array.each do |elem|
+        save_to_local(elem)
+        sleep(1) # Google APIのRate Limitを超えないよう配慮
+      end
+    else
+      save_to_local(name)
+      save_to_local("対応表")
+      event.respond "シート「#{name}」をローカルに保存しました。"
+    end
   rescue =>e
     event.respond "[" + e.class.to_s + "] " + e.message.to_s
     print_error(e)
   end
 end
-  
-    
+
+
 # シートを利用した自動判定。簡単な計算機能付き。
 # オプションで判定の種類とダイスを変更可
 bot.command :i do |event, id, skill,
                    dice_num = "1", dice_size = "100", type = "<="|
   begin
-    if skill =~ /\A[^*\+\-\/]+[*\/\+\-]\d+[\d\+\-*\/\(\)]*\z/   
+    if skill =~ /\A[^*\+\-\/]+[*\/\+\-]\d+[\d\+\-*\/\(\)]*\z/
       skill_name = skill.gsub(/\A([^*\+\-\/]+)[*\/\+\-]\d+[\d\+\-*\/\(\)]*\z/,
                               '\1')
       skill_val = skill_value_local(id_to_title(id.to_i), skill_name)
@@ -416,7 +427,7 @@ bot.command :sanr do |event, id, value|
     value = (-value.to_i).to_s
     add_value(id_to_title(id.to_i), "正気度", value, "minus")
     current_san = show_value(id_to_title(id.to_i), "正気度", "sum")
-    previous_san = current_san.to_i + value.to_i 
+    previous_san = current_san.to_i + value.to_i
     event.respond '\> ' + get_user_name(event.user) + "\n" +
                   "SAN" + previous_san.to_s + "→" + current_san
     save_to_local(id_to_title(id.to_i))
@@ -425,7 +436,41 @@ bot.command :sanr do |event, id, value|
     print_error(e)
   end
 end
-    
+
+# HPの操作
+bot.command :hp do |event, id, value|
+  begin
+    value = (-value.to_i).to_s
+    event.channel.start_typing()
+    add_value(id_to_title(id.to_i), "HP", value, "minus")
+    current_san = show_value(id_to_title(id.to_i), "HP", "sum")
+    previous_san = current_san.to_i + value.to_i
+    event.respond '\> ' + get_user_name(event.user) + "\n" +
+                  "SAN" + previous_san.to_s + "→" + current_san
+    save_to_local(id_to_title(id.to_i))
+  rescue =>e
+    event.respond "[" + e.class.to_s + "] " +  e.message.to_s
+    print_error(e)
+  end
+end
+
+# MPの操作
+bot.command :mp do |event, id, value|
+  begin
+    value = (-value.to_i).to_s
+    event.channel.start_typing()
+    add_value(id_to_title(id.to_i), "MP", value, "minus")
+    current_san = show_value(id_to_title(id.to_i), "MP", "sum")
+    previous_san = current_san.to_i + value.to_i
+    event.respond '\> ' + get_user_name(event.user) + "\n" +
+                  "SAN" + previous_san.to_s + "→" + current_san
+    save_to_local(id_to_title(id.to_i))
+  rescue =>e
+    event.respond "[" + e.class.to_s + "] " +  e.message.to_s
+    print_error(e)
+  end
+end
+
 # ヘルプの表示。
 bot.command :help do |event|
   f = File.open("config/helptext.txt", mode = "rt:utf-8:utf-8")

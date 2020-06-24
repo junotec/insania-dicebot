@@ -35,7 +35,7 @@ end
 
 # idを受取り対応するタイトルを返す
 def id_to_title(id)
-  local_path = "data/対応表.txt"
+  local_path = "data/sheetlist.txt"
   save_to_local("対応表") unless File.exist?(local_path)
   f = File.open(local_path, "r")
   content_array = eval(f.read)
@@ -48,7 +48,7 @@ end
 
 # タイトルを受け取りidを返す
 def title_to_id(title)
-  local_path = "data/対応表.txt"
+  local_path = "data/sheetlist.txt"
   save_to_local("対応表") unless File.exist?(local_path)
   f = File.open(local_path, "r")
   content_array = eval(f.read)
@@ -130,7 +130,7 @@ def column_title_to_column(ws, column_title)
   return i if ws[1,i] == column_title
   i += 1
   end
-  raise(ArgumentError, format('Found no column with the title provided: %p', 
+  raise(ArgumentError, format('Found no column with the title provided: %p',
         column_title))
 end
 
@@ -143,13 +143,10 @@ def reload_skills(pc_title)
     skills[ws[i,1]] = i
     # 合計値の式が未設定の場合、入力する(やや柔軟性に欠ける)
     if ws.list[i-2]["合計値"] == "" then
-      ini_val_cell = row_col_to_cell_name(i, 
-                                          column_title_to_column(ws, "初期値"))
-      hob_val_cell = row_col_to_cell_name(i, 
-                                          column_title_to_column(ws, "趣味P"))
-      minus_val_cell = row_col_to_cell_name(i, 
-                                            column_title_to_column(ws, "減少値"))
-      ws.list[i-2]["合計値"] = "=SUM(" + ini_val_cell + ":" + 
+      ini_val_cell = row_col_to_cell_name(i, column_title_to_column(ws, "初期値"))
+      hob_val_cell = row_col_to_cell_name(i, column_title_to_column(ws, "趣味P"))
+      minus_val_cell = row_col_to_cell_name(i, column_title_to_column(ws, "減少値"))
+      ws.list[i-2]["合計値"] = "=SUM(" + ini_val_cell + ":" +
                                hob_val_cell + ")-" + minus_val_cell
       ws.save if ws.dirty?
     end
@@ -205,7 +202,7 @@ def add_value(pc_title, skill, value, type)
   f.close
   skills = JSON.parse(skills_json)
   # 型変換で見難いが、現在値にvalueを足した値を代入しているだけ
-  ws.list[skills[skill]-2][type_abbr_to_type(type)] = 
+  ws.list[skills[skill]-2][type_abbr_to_type(type)] =
       (ws.list[skills[skill]-2][type_abbr_to_type(type)].to_i + value.to_i).to_s
   ws.save
 end
@@ -223,12 +220,13 @@ end
 
 # skill_valueのローカル版
 def show_value_local(pc_title, skill, type)
-  local_path = "data/#{pc_title}.txt"
+  txt_path = "data/data.txt"
   save_to_local(pc_title) unless File.exist?(local_path)
-  f = File.open(local_path, "r")
+  f = File.open(txt_path, "r")
   content_hash = eval(f.read)
   f.close
-  return content_hash[skill][type_abbr_to_type(type)].to_s
+  save_to_local(pc_title) if content_hash[pc_title] == nil
+  return content_hash[pc_title][skill][type_abbr_to_type(type)].to_s
 end
 
 # 指定したPCの指定した技能の値(合計値)を整数で返す
@@ -241,15 +239,16 @@ def skill_value(pc_title, skill)
   skills = JSON.parse(skills_json)
   return ws.list[skills[skill]-2]["合計値"].to_i
 end
-  
+
 # skill_valueのローカル版
 def skill_value_local(pc_title, skill)
-  local_path = "data/#{pc_title}.txt"
-  save_to_local(pc_title) unless File.exist?(local_path)
-  f = File.open(local_path, "r")
+  txt_path = "data/data.txt"
+  save_to_local(pc_title) unless File.exist?(txt_path)
+  f = File.open(txt_path, "r")
   content_hash = eval(f.read)
   f.close
-  return content_hash[skill]["合計値"].to_i
+  save_to_local(pc_title) if content_hash[pc_title] == nil
+  return content_hash[pc_title][skill]["合計値"].to_i
 end
 
 # 対応表を文字列出力
@@ -278,31 +277,41 @@ def show_sheet(name)
 end
 
 # 処理時間短縮のため、シートをローカルにハッシュとして保管
-# 対応表のみ形式が異なるので分岐
+# tmpを使ったり、全シートをdata.txtにまとめたりしているのはheroku用
 def save_to_local(name)
+  temp_csv_path = "data/data.csv"
+  txt_path = "data/data.txt"
+  sheetlist_txt_path = "data/sheetlist.txt"
   ws = $sp.worksheet_by_title(name)
-  File.open("./data/#{name}.csv", "w") do |f|
+  File.open(temp_csv_path, "w") do |f|
     ws.export_as_file(f.path)
   end
   unless name == "対応表"
-    list = CSV.read("./data/#{name}.csv", headers:true).map(&:to_hash)
+    list = CSV.read(temp_csv_path, headers:true).map(&:to_hash)
     hash = {}
     list.each do |obj|
       hash[obj["技能名"]] = obj
     end
-    File.open("data/#{name}.txt", mode = "w") do |f|
-      f.write(hash)
+    File.open(txt_path, mode = "w") unless File.exist?(txt_path)
+    content_txt = File.open(txt_path, mode="r"){ |f| f.read()}
+    content = eval(content_txt)
+    if content == nil
+      wrapper_hash = { name => hash}
+      File.open(txt_path, mode = "w"){ |f| f.write(wrapper_hash)}
+    else
+      content[name] = hash
+      File.open(txt_path, mode = "w"){ |f| f.write(content)}
     end
   else
-    list = CSV.read("./data/#{name}.csv")
+    list = CSV.read(temp_csv_path)
     array = []
     list.each do |obj|
       array << obj[0]
     end
-    File.open("data/#{name}.txt", mode = "w") do |f|
+    File.open(sheetlist_txt_path, mode = "w") do |f|
       f.write(array)
     end
   end
-  File.delete("./data/#{name}.csv")
+  File.delete(temp_csv_path)
   return nil
 end
